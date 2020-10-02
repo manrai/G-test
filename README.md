@@ -23,4 +23,4 @@
 
 `$ python3 bb-eight.py`
 
-For details on API endpoints and usage, please see the NHLBI BioData Catalyst BB-EIGHT Tutorial in the /tutorial directory.
+For details on API endpoints and usage, please see the [NHLBI BioData Catalyst BB-EIGHT Tutorial](https://github.com/manrai/G-test/tree/main/tutorial).
