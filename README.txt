@@ -1,8 +1,6 @@
-Installing the BB-EIGHT API:
+# Installing the BB-EIGHT API:
 
-1. Requirements
-
-Python packages required:
+## Python packages required:
 flask
 numpy
 pandas
@@ -10,17 +8,17 @@ sqlite3
 Json
 subprocess
 
-R packages required:
+## R packages required:
 tidyverse
 RSQLite
 ggthemes
 optparse
 stringi
 
-System:
+## System:
 bcftools
 
-2. Running the BB-EIGHT API from the terminal:
+## Running the BB-EIGHT API from the terminal:
 
 $ python3 bb-eight.py
 
