@@ -1,0 +1,171 @@
+---
+title: "Beta binomial distributions for penetrance calculations"
+output: html_document
+---
+
+#### 1. Our model-- below is code for modeling each term of penetrance using their beta binomial distribution.
+```{r}
+# Set parameters.
+# n = number of total datapoints and x = number of successes.
+n <- 50 # Arbitrary number for this example
+x <- 20 # Arbitrary number for this example
+a <- 1 # alpha = 1, beta = 1 using prior Beta(1,1)
+b <- 1
+theta <- seq(0,1,0.1) #Proportion in the population with 'x'
+
+term1_df <- data.frame()
+term2_df <- data.frame()
+term3_df <- data.frame()
+
+# Estimate each term in equation for penetrance [P(G|D), P(D), and P(G)] with their own beta binomial distribution.
+# Sample each 10,000 times to form a penetrance posterior distribution. 
+# Each time, compute a new more informative prior on p: Beta(x + a, n - x + b), 
+for (i in 1:10000) {
+
+  # Update your 'x' here given new cohort information
+  
+  # Estimate term 1 -- P(G|D) using beta-binomial
+  prior <- dbeta(theta,a,b) # dbeta(x, shape1, shape2) where x is vector of quantiles
+  posterior <- dbeta(theta,a+x,b+n-x) # x is the new information added from your data for P(G|D)
+  term1_df <- rbind(term1_df, posterior) #Add each vector of posterior as a row in term1_df
+    
+  # Estimate term 2 -- P(D) using beta-binomial
+  prior <- dbeta(theta,a,b) 
+  posterior <- dbeta(theta,a+x,b+n-x) # x is the new information added from your data for P(D)
+  term2_df <- rbind(term2_df, posterior) #Add each vector of posterior as a row in term2_df
+
+  # Estimate term 3 -- P(G) using beta-binomial
+  prior <- dbeta(theta,a,b) # dbeta(x, shape1, shape2, ncp = 0, log = FALSE) where x is vector of quantiles
+  posterior <- dbeta(theta,a+x,b+n-x) # x is the new information added from your data for P(G)
+  term3_df <- rbind(term3_df, posterior) #Add each vector of posterior as a row in term3_df
+}
+
+#Compute penetrance using above calculated terms
+penetrance <- term1_df*term2_df/term3_df
+```
+
+### 2a. How do 'alpha' and 'beta' affect the distribution?
+```{r echo = FALSE}
+library(ggplot2)
+
+df2 <- matrix(,404,4)
+df3 <- matrix(,1616,4)
+my_sequence <- c(0.01, 0.1, 1, 5)
+my_sequence2 <- c(0.5, 1, 5, 9)
+for(b in my_sequence2) {
+for(a in my_sequence) {
+  n <- 10
+  x <- 6
+  theta <- seq(0, 1, 0.01)
+  df <- matrix(,101,4)
+  df[,1] <- theta
+  posterior <- dbeta(theta,a+x,b+n-x)
+  df[,2] <- posterior
+  df[,3] <- paste(a)
+  df[,4] <- paste(b)
+  df2 <- rbind(df, df2)
+  }
+  df3 <- rbind(df2, df3)
+}
+df3 <- as.data.frame(df3)
+colnames(df3) <- c("theta", "posterior", "Alpha", "Beta")
+df3 <- unique(df3)
+
+df3$posterior <- as.numeric(as.character(df3$posterior))
+df3$theta <- as.numeric(as.character(df3$theta))
+df3 <- na.omit(df3)
+ggplot(df3, aes(theta, posterior)) + geom_point() + facet_grid(Alpha ~ Beta) + xlab("Theta") + ylab("Probability Density") + ggtitle("Beta-Binomial Distribution varying alpha and beta") + theme_bw() + theme(axis.text.x = element_text(angle = 90))
+```
+
+### 2b. How does 'n' affect the distribution?
+```{r echo = FALSE}
+library(ggplot2)
+
+df2 <- matrix(,404,3)
+my_sequence <- c(50, 100, 1000, 10000)
+for(n in my_sequence) {
+  b <- 1
+  x <- 6
+  a <- 1
+  theta <- seq(0, 1, 0.01)
+  df <- matrix(,101,3)
+  df[,1] <- theta
+  posterior <- dbeta(theta,a+x,b+n-x)
+  df[,2] <- posterior
+  df[,3] <- paste(n)
+  df2 <- rbind(df, df2)
+    }
+df2 <- as.data.frame(df2)
+colnames(df2) <- c("theta", "posterior", "N")
+
+df2$posterior <- as.numeric(as.character(df2$posterior))
+df2$theta <- as.numeric(as.character(df2$theta))
+df2 <- na.omit(df2)
+ggplot(df2, aes(theta, posterior, color = N)) + geom_point() + xlab("Theta") + ylab("Probability Density") + ggtitle("Beta-Binomial Distribution varying N") + theme_bw()
+```
+
+### 2c. How does 'x' affect the distribution?
+```{r echo = FALSE}
+library(ggplot2)
+
+df2 <- matrix(,404,3)
+my_sequence <- c(2, 4, 6, 8)
+for(x in my_sequence) {
+  n <- 10
+  b <- 1
+  a <- 1
+  theta <- seq(0, 1, 0.01)
+  df <- matrix(,101,3)
+  df[,1] <- theta
+  posterior <- dbeta(theta,a+x,b+n-x)
+  df[,2] <- posterior
+  df[,3] <- paste(x)
+  df2 <- rbind(df, df2)
+    }
+df2 <- as.data.frame(df2)
+colnames(df2) <- c("theta", "posterior", "x")
+
+df2$posterior <- as.numeric(as.character(df2$posterior))
+df2$theta <- as.numeric(as.character(df2$theta))
+df2 <- na.omit(df2)
+ggplot(df2, aes(theta, posterior, color = x)) + geom_point() + xlab("Theta") + ylab("Probability Density") + ggtitle("Beta-Binomial Distribution varying x") + theme_bw()
+```
+
+### 2d. How about combinations of varying a, b, and x?
+```{r echo = FALSE}
+library(ggplot2)
+
+df2 <- matrix(,404,5)
+df3 <- matrix(,1616,5)
+df4 <- matrix(,6464,5)
+my_sequence2 <- c(0.5, 1, 2, 3)
+my_sequence1 <- c(0.1, 1, 2, 3)
+my_sequence <- c(2, 4, 6, 8)
+for (b in my_sequence2) {
+for (a in my_sequence1) {
+for(x in my_sequence) {
+  n <- 10
+  theta <- seq(0, 1, 0.01)
+  df <- matrix(,101,5)
+  df[,1] <- theta
+  posterior <- dbeta(theta,a+x,b+n-x)
+  df[,2] <- posterior
+  df[,3] <- paste(a)
+  df[,4] <- paste(x)
+  df[,5] <- paste(b)
+  df2 <- rbind(df, df2)
+  }
+  df3 <- rbind(df2, df3)
+}
+  df4 <- rbind(df3, df4)
+}
+
+df4 <- as.data.frame(df4)
+df4 <- unique(df4)
+colnames(df4) <- c("theta", "posterior", "a", "x", "b")
+
+df4$posterior <- as.numeric(as.character(df4$posterior))
+df4$theta <- as.numeric(as.character(df4$theta))
+df4 <- na.omit(df4)
+ggplot(df4, aes(theta, posterior, color = x)) + geom_point() + facet_grid(a ~ b) + xlab("Theta") + ylab("Probability Density") + ggtitle("Beta-Binomial Distribution varying x, a (0.1,1,2,3), & b (0.5,1,2,3)") + theme_bw() + theme(axis.text.x = element_text(angle = 90))
+```
